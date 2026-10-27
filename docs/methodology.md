@@ -1,4 +1,4 @@
-# Methodology — how to not fool yourself validating a trading strategy
+# Methodology: how to not fool yourself validating a trading strategy
 
 Financial decision data is small, noisy, and autocorrelated, and the person analyzing it
 usually *wants* to find a signal. That combination makes spurious "discoveries" the default
@@ -16,7 +16,7 @@ drives that decision. The lessons generalize to any per-decision ranking questio
 ## 1. Gate-first: decide the verdict rule before you see the number
 
 The cheapest and most powerful guard is to write down, *before computing anything*, (a) the
-exact statistic, (b) the threshold, and (c) what each outcome will mean — and then refuse to
+exact statistic, (b) the threshold, and (c) what each outcome will mean, and then refuse to
 move the goalposts. Researcher degrees of freedom (which window, which subset, which metric,
 which cutoff) are what manufacture false positives; pre-registration spends them up front,
 in the open.
@@ -39,14 +39,14 @@ See [gate-first-protocol.md](gate-first-protocol.md) and the worked
 
 When a strategy rebalances, every name it touches that day shares one signal snapshot, one
 regime, one market state. They are **not** independent observations. Bootstrapping over rows
-then reports a confidence interval far tighter than the data earns — you "find" significance
+then reports a confidence interval far tighter than the data earns: you "find" significance
 that is really autocorrelation.
 
 The fix is to resample the **cluster** (the event), not the row.
 [`clustered_auc`](../src/stratval/clustered_bootstrap.py) resamples whole events with
 replacement, so the reported precision reflects the number of independent decision
 *occasions*. A subtle but important detail: degenerate resamples (a bootstrap draw that
-happens to contain only one class) are scored as 0.5, **not dropped** — dropping them biases
+happens to contain only one class) are scored as 0.5, **not dropped**: dropping them biases
 the left tail upward and overstates significance, since it discards exactly the unlucky draws
 a left-tail probability is meant to count.
 
@@ -59,7 +59,7 @@ because the two AUCs move together across resamples.
 
 ## 3. Strip the period: within-event beats pooled
 
-This is the lesson that, once seen, you can't unsee. Consider a slow **regime clock** — a
+This is the lesson that, once seen, you can't unsee. Consider a slow **regime clock**: a
 variable that drifts across events and shifts each event's overall buy-rate, but is constant
 *within* any one event. Pooled over all decisions it looks predictive (high-regime events buy
 more, so the variable "predicts" buys). Yet it carries **zero** within-event information: it
@@ -77,7 +77,7 @@ The confound out-scores the real signal *pooled*, and collapses to exactly chanc
 *within-event*. So the verdict-bearing metric is the within-event one
 ([`within_event_auc`](../src/stratval/within_event.py)): one AUC per event, decision-weighted
 across events, with an event-clustered CI. The pooled number is kept only as a labelled
-reference — never as evidence.
+reference, never as evidence.
 
 > Real-world origin: a leverage/regime clock that spuriously flips within-name reads is a
 > classic way to get a false positive in this kind of work. Banning such book-level scalars
@@ -87,7 +87,7 @@ reference — never as evidence.
 
 ## 4. Forward only: walk-forward with an embargo
 
-Random K-fold cross-validation is invalid on time series — a fold from the middle trains on
+Random K-fold cross-validation is invalid on time series: a fold from the middle trains on
 the future to predict the past. The only defensible split is **expanding-window walk-forward**:
 train up to a cut, test on the block after it, never the reverse
 ([`make_expanding_folds`](../src/stratval/walkforward.py)).
@@ -101,17 +101,17 @@ shown to decorrelate while a deliberately slow control is flagged as a control, 
 
 ---
 
-## 5. Build nulls that can fail — and check they do
+## 5. Build nulls that can fail, and check they do
 
 A gate you trust is one you've watched *fail* on something that provably has no signal. The
 [`nulls`](../src/stratval/nulls.py) module manufactures these:
 
-- **within-event shuffle** — permute the score within each event, destroying the
+- **within-event shuffle**: permute the score within each event, destroying the
   score↔label link while preserving every base rate and class balance. A correct within-event
   metric must collapse to ~0.5.
-- **anti-signal** — negate the score; the metric must invert below 0.5 (a cheap sign-flip
+- **anti-signal**: negate the score; the metric must invert below 0.5 (a cheap sign-flip
   check).
-- **label shuffle** — the classic permutation null.
+- **label shuffle**: the classic permutation null.
 
 The [`robustness`](../src/stratval/robustness.py) suite runs these as explicit **negative
 controls** alongside two more stress tests: **leave-one-block-out** (no single month is
@@ -134,7 +134,7 @@ are expected). A claim should be reported as "survived FDR control", not just "p
 ## 7. Validate the mechanism, not the P&L
 
 A levered, single-factor clone of a strategy will track its returns almost perfectly while
-sharing none of its decision logic — so a high return correlation is *not* evidence you
+sharing none of its decision logic, so a high return correlation is *not* evidence you
 recovered the mechanism. Whenever the question is "did I recover how it decides?", the
 evidence has to live in the **decision-level** metrics above (within-event direction, the
 harvest separation, the negative controls), and any P&L tracking is reported as explicitly
@@ -155,7 +155,7 @@ Two standard tools, in [`deflated_sharpe`](../src/stratval/deflated_sharpe.py), 
 Sharpe space rather than the p-value space of lesson 6:
 
 - **Probabilistic Sharpe Ratio (PSR)** corrects the Sharpe's sampling error for sample length
-  *and* for skew/fat tails — the return shape of most real strategies inflates a naive Sharpe's
+  *and* for skew/fat tails: the return shape of most real strategies inflates a naive Sharpe's
   confidence. But PSR alone still ignores how many trials you ran.
 - **Deflated Sharpe Ratio (DSR)** is the PSR evaluated against a benchmark `SR0` that is the
   *expected maximum* Sharpe under the null given N trials and the spread of their Sharpes. The
@@ -174,21 +174,21 @@ See [`examples/demo_overfitting_sharpe.py`](../examples/demo_overfitting_sharpe.
 
 ---
 
-## Where this sits — related work
+## Where this sits: related work
 
 None of this is invented here; the value is in having a single, tested harness that applies all
 of it. The lineage worth knowing:
 
 - **Walk-forward + embargo (lesson 4)** is the practitioner form of the *purging and embargoing*
-  in Marcos López de Prado, *Advances in Financial Machine Learning* (2018) — the standard
+  in Marcos López de Prado, *Advances in Financial Machine Learning* (2018), the standard
   reference for leakage-free cross-validation of trading strategies.
 - **DSR / PSR (lesson 8)** are from Bailey & López de Prado, "The Sharpe Ratio Efficient
   Frontier" (2012) and "The Deflated Sharpe Ratio" (2014). **PBO/CSCV** is Bailey, Borwein,
   López de Prado & Zhu, "The Probability of Backtest Overfitting" (2017).
 - **Family-wise / FDR control (lesson 6)** is the classical multiple-testing literature
   (Bonferroni; Benjamini & Hochberg, 1995). For the returns-space analogue of "did the best of
-  many strategies beat chance," see White's Reality Check (2000) and Hansen's SPA test (2005) —
-  not implemented here, but the same question DSR answers via extreme-value theory.
+  many strategies beat chance," see White's Reality Check (2000) and Hansen's SPA test (2005),
+  not implemented here but the same question DSR answers via extreme-value theory.
 
 ---
 
@@ -197,7 +197,7 @@ of it. The lineage worth knowing:
 Pre-commit the decision rule. Cluster the bootstrap on the shared-signal unit. Lead on the
 period-stripped (within-event) statistic and treat the pooled number as a reference only. Test
 forward with an embargo whose leakage you measure. Build nulls that can fail and confirm they
-do. Control the family-wide error rate — and, in Sharpe space, deflate the winner for the
+do. Control the family-wide error rate and, in Sharpe space, deflate the winner for the
 number of trials you ran (DSR) and check that the selection generalizes (PBO). And remember
 that tracking the P&L is not the same as recovering the mechanism. None of it is exotic; the
 value is in applying all of it, every time, *before* the number can talk you out of it.

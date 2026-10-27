@@ -6,11 +6,11 @@ verdict-bearing statistic is computed.
 
 ## The template
 
-Write a pre-registration document (markdown is fine — see the
+Write a pre-registration document (markdown is fine; see the
 [worked example](../examples/example_preregistration.md)) with these sections, in order:
 
 1. **Question.** One sentence. What rule or signal are you testing, on what decision?
-2. **Data & grain.** The unit of analysis, and — critically — the **cluster unit** (the
+2. **Data & grain.** The unit of analysis and, critically, the **cluster unit** (the
    shared-signal occasion: a rebalance event, a trading day). Inference clusters on this.
 3. **Out-of-sample policy.** Which slice is the forward read; the embargo length; an explicit
    ban on random K-fold.
@@ -20,7 +20,7 @@ Write a pre-registration document (markdown is fine — see the
    the pre-committed reading of **both** pass and fail. Name which one or two gates carry
    verdict authority; everything else is descriptive.
 6. **Family-wise control.** How the family of tests is corrected (BH-FDR / Bonferroni).
-7. **Decision tree.** The verdict for every combination of gate outcomes — written in advance.
+7. **Decision tree.** The verdict for every combination of gate outcomes, written in advance.
 
 ## Turning a gate into code
 
@@ -45,7 +45,7 @@ print(result)   # [PASS] G1-within-event-direction: p_le_050 = 0.0000 (gate: <= 
 ```
 
 The `Gate` is frozen: there is no method to change the threshold after `evaluate`. If you
-find yourself wanting to, that is the signal to stop and write a *new* pre-registration — not
+find yourself wanting to, that is the signal to stop and write a *new* pre-registration, not
 to edit this one.
 
 ## The rules that keep it honest
@@ -60,5 +60,5 @@ to edit this one.
 - **Reproduce bit-for-bit.** Seed every bootstrap; a result you can't reproduce exactly isn't
   a result yet.
 - **State what you carried, not just what you tested.** If participation or sizing is taken as
-  given rather than reconstructed, say so next to the verdict — a conditional result is honest
+  given rather than reconstructed, say so next to the verdict: a conditional result is honest
   only when the condition is visible.
